@@ -1,0 +1,9 @@
+*.db
+example/*
+__pycache__
+*.pyc
+.DS_Store
+*.csv
+*.xlsx
+*.pptx
+doc/*
