@@ -6,4 +6,4 @@ __pycache__
 *.csv
 *.xlsx
 *.pptx
-doc/*
+testfiles/*
