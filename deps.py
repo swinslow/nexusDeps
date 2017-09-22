@@ -110,6 +110,9 @@ class DependencyCatalog:
     dep.setValuesWithDict(depData)
     self._dependencies[ds] = dep
 
+    # return dependency string to caller
+    return ds
+
   def delDependency(self, groupId, artifactId, version):
     ds = depString(groupId, artifactId, version)
     del self._dependencies[ds]
