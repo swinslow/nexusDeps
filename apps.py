@@ -43,10 +43,10 @@ class NexusApp:
     # FIXME should we check first whether the dependency is present?
     self._dependencies.append(depString)
 
-class NexusApps:
+class NexusAppCatalog:
 
   def __init__(self, orgId):
-    super(NexusApps, self).__init__()
+    super(NexusAppCatalog, self).__init__()
 
     self._apps = {}
     self._orgId = orgId

@@ -1,4 +1,4 @@
-# nexusiqparsetools.py
+# nexustools.py
 #
 # This module contains functions for retrieving and parsing Nexus IQ reports.
 #
