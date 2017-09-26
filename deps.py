@@ -19,6 +19,8 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+from collections import namedtuple
+
 # helper function for dependency references
 def depString(groupId, artifactId, version):
   if groupId:
@@ -39,6 +41,11 @@ def parseCoords(depData):
       ver = coordinates.get("version", None)
     return (gId, aId, ver)
 
+
+LicenseInfo = namedtuple("LicenseInfo", ["licenses", "threat", "status"])
+# "licenses": list of applicable license strings
+# "threat": integer with license threat category
+# "status": string with clearing status
 
 class DependencyError(Exception):
   """Exception raised when a dependency cannot be to the catalog.
@@ -140,6 +147,30 @@ class DependencyCatalog:
 
   def getDependencyList(self):
     return self._dependencies.values()
+
+  # returns best license info based on clearing status:
+  #  - if overridden: returns overridden licenses / threat
+  #  - if confirmed or open: returns effective licenses / threat
+  def getBestLicenseInfoForDepString(self, ds):
+    dep = self._dependencies.get(ds, None)
+    if not dep:
+      return None
+
+    # pull out appropriate info based on status
+    status = dep._status
+    if status == "Overridden":
+      threat = dep._overriddenLicenseThreat
+      licenses = dep._licenses.get("final", None)
+    else:
+      threat = dep._effectiveLicenseThreat
+      licenses = dep._licenses.get("effective", None)
+
+    # sort and build into LicenseInfo object, and return it
+    if licenses:
+      licenses = sorted(licenses)
+    else:
+      licenses = []
+    return LicenseInfo(licenses, threat, status)
 
   # returns tuple (threat value #, licenses) or None if not found
   def getFinalLicenseForDepString(self, ds):

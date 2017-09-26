@@ -165,27 +165,17 @@ class NexusData:
       filename = f"{self._reportsDir}/{appName}.csv"
       with open (filename, 'w') as fout:
         app = self._appCatalog.getApp(appName)
-        fout.write('"Threat level", Licenses, Component\n')
+        fout.write('"Threat level",Licenses,Status,Component\n')
         # FIXME don't reach into app vars to handle _dependencies directly!
         for ds in sorted(app._dependencies):
-          retval = self._depCatalog.getFinalLicenseForDepString(ds)
-          if retval:
-            (threat, lics) = retval
-            finalStr = ""
+          licenseInfo = self._depCatalog.getBestLicenseInfoForDepString(ds)
+          if not licenseInfo:
+            fout.write(f'"N/A","N/A","{ds}"\n')
           else:
-            # if not finalized, check the effective licenses
-            retval2 = self._depCatalog.getEffectiveLicenseForDepString(ds)
-            if retval2:
-              (threat, lics) = retval2
-              threat = "*" + str(threat)
-              finalStr = "***"
-            else:
-              # if still couldn't get that, leave a blank
-              (threat, lics) = "***", []
-              finalStr = "***"
-          licString = finalStr + " AND ".join(lics)
-          fout.write(f'"{threat}","{licString}","{ds}"\n')
-          #print(f"  -- {threat} [{lics}]: {ds}")
+            licString = " AND ".join(licenseInfo.licenses)
+            threat = licenseInfo.threat
+            status = licenseInfo.status
+            fout.write(f'"{threat}","{licString}","{status}","{ds}"\n')
 
     except Exception as e:
       print((f"Couldn't output report to {filename}: {str(e)}"))
