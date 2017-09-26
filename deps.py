@@ -171,23 +171,3 @@ class DependencyCatalog:
     else:
       licenses = []
     return LicenseInfo(licenses, threat, status)
-
-  # returns tuple (threat value #, licenses) or None if not found
-  def getFinalLicenseForDepString(self, ds):
-    dep = self._dependencies.get(ds, None)
-    if not dep:
-      return None
-    finalLics = dep._licenses.get("final", None)
-    if not finalLics:
-      return None
-    return (dep._overriddenLicenseThreat, sorted(finalLics))
-
-  # returns tuple (threat value #, licenses) or None if not found
-  def getEffectiveLicenseForDepString(self, ds):
-    dep = self._dependencies.get(ds, None)
-    if not dep:
-      return None
-    effectiveLics = dep._licenses.get("effective", None)
-    if not effectiveLics:
-      return None
-    return (dep._effectiveLicenseThreat, sorted(effectiveLics))
