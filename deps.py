@@ -92,7 +92,6 @@ class Dependency:
       coordinates = identifier.get("coordinates", {})
       self._artifactId = coordinates.get("name", None)
       self._version = coordinates.get("version", None)
-      print(f"got {self.depString()}")
 
 class DependencyCatalog:
 
@@ -141,3 +140,13 @@ class DependencyCatalog:
 
   def getDependencyList(self):
     return self._dependencies.values()
+
+  # returns tuple (threat value #, licenses) or None if not found
+  def getFinalLicenseForDepString(self, ds):
+    dep = self._dependencies.get(ds, None)
+    if not dep:
+      return None
+    finalLics = dep._licenses.get("final", None)
+    if not finalLics:
+      return None
+    return (dep._overriddenLicenseThreat, sorted(finalLics))
