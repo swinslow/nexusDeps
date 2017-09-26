@@ -21,7 +21,23 @@
 
 # helper function for dependency references
 def depString(groupId, artifactId, version):
-  return f"{self._groupId} : {self._artifactId} : {self._version}"
+  if groupId:
+    return f"{groupId} : {artifactId} : {version}"
+  else:
+    return f"{artifactId} : {version}"
+
+def parseCoords(depData):
+    gId = depData.get("groupId", None)
+    aId = depData.get("artifactId", None)
+    ver = depData.get("version", None)
+    # FIXME temp fix; this is NOT the right way to do this
+    if aId == None:
+      identifier = depData.get("componentIdentifier", {})
+      coordinates = identifier.get("coordinates", {})
+      gId = None
+      aId = coordinates.get("name", None)
+      ver = coordinates.get("version", None)
+    return (gId, aId, ver)
 
 
 class DependencyError(Exception):
@@ -44,10 +60,10 @@ class Dependency:
     self._version = ""
     self._status = ""
     self._licenses = {
-      final: [],
-      effective: [],
-      observed: [],
-      declared: []
+      "final": [],
+      "effective": [],
+      "observed": [],
+      "declared": []
     }
     self._overriddenLicenseThreat = -1
     self._effectiveLicenseThreat = -1
@@ -63,12 +79,20 @@ class Dependency:
     self._artifactId = depData.get("artifactId", None)
     self._version = depData.get("version", None)
     self._status = depData.get("status", None)
-    self._licenses.final = depData.get("overriddenLicenses", [])
-    self._licenses.effective = depData.get("effectiveLicenses", [])
-    self._licenses.observed = depData.get("observedLicenses", [])
-    self._licenses.declared = depData.get("declaredLicenses", [])
+    self._licenses["final"] = depData.get("overriddenLicenses", [])
+    self._licenses["effective"] = depData.get("effectiveLicenses", [])
+    self._licenses["observed"] = depData.get("observedLicenses", [])
+    self._licenses["declared"] = depData.get("declaredLicenses", [])
     self._overriddenLicenseThreat = depData.get("overriddenLicenseThreat", None)
     self._effectiveLicenseThreat = depData.get("effectiveLicenseThreat", None)
+
+    # FIXME temp fix; this is NOT the right way to do this
+    if self._artifactId == None:
+      identifier = depData.get("componentIdentifier", {})
+      coordinates = identifier.get("coordinates", {})
+      self._artifactId = coordinates.get("name", None)
+      self._version = coordinates.get("version", None)
+      print(f"got {self.depString()}")
 
 class DependencyCatalog:
 
@@ -89,9 +113,7 @@ class DependencyCatalog:
     # present in the catalog
 
     # first, pull coordinates and check if dependency is already present
-    groupId = depData.get("groupId", None)
-    artifactId = depData.get("artifactId", None)
-    version = depData.get("version", None)
+    groupId, artifactId, version = parseCoords(depData)
     ds = depString(groupId, artifactId, version)
     
     dep = self.getDependency(groupId, artifactId, version)

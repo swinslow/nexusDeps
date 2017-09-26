@@ -22,7 +22,7 @@
 class NexusApp:
 
   def __init__(self, name, appId, reportId=None):
-    super(NexusApps, self).__init__()
+    super(NexusApp, self).__init__()
 
     self._name = name
     self._appId = appId
