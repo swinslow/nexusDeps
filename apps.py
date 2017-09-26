@@ -58,5 +58,8 @@ class NexusAppCatalog:
   def getApp(self, name):
     return self._apps.get(name, None)
 
+  def getAllAppNames(self):
+    return sorted(list(self._apps.keys()))
+
   def __len__(self):
     return len(self._apps)
