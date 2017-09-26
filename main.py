@@ -168,8 +168,22 @@ class NexusData:
         fout.write('"Threat level", Licenses, Component\n')
         # FIXME don't reach into app vars to handle _dependencies directly!
         for ds in sorted(app._dependencies):
-          (threat, lics) = self._depCatalog.getFinalLicenseForDepString(ds)
-          licString = " AND ".join(lics)
+          retval = self._depCatalog.getFinalLicenseForDepString(ds)
+          if retval:
+            (threat, lics) = retval
+            finalStr = ""
+          else:
+            # if not finalized, check the effective licenses
+            retval2 = self._depCatalog.getEffectiveLicenseForDepString(ds)
+            if retval2:
+              (threat, lics) = retval2
+              threat = "*" + str(threat)
+              finalStr = "***"
+            else:
+              # if still couldn't get that, leave a blank
+              (threat, lics) = "***", []
+              finalStr = "***"
+          licString = finalStr + " AND ".join(lics)
           fout.write(f'"{threat}","{licString}","{ds}"\n')
           #print(f"  -- {threat} [{lics}]: {ds}")
 
@@ -201,7 +215,13 @@ if __name__ == "__main__":
       nd.loadAppInitialData()
       time.sleep(0.5)
 
-      nd.getAllLicensesAndReports()
+      #nd.getAllLicensesAndReports()
+      # TEMP
+      appName = "aai-aai-service"
+      print(f"{appName}: getting license data...")
+      nd.getLicenses(appName)
+      print(f"{appName}: creating report...")
+      nd.createReport(appName)
 
       print("Exiting.")
   
