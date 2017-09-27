@@ -158,7 +158,7 @@ class DependencyCatalog:
 
     # pull out appropriate info based on status
     status = dep._status
-    if status == "Overridden":
+    if status in ["Overridden", "Selected"]:
       threat = dep._overriddenLicenseThreat
       licenses = dep._licenses.get("final", None)
     else:

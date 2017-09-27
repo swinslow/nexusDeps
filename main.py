@@ -205,13 +205,13 @@ if __name__ == "__main__":
       nd.loadAppInitialData()
       time.sleep(0.5)
 
-      #nd.getAllLicensesAndReports()
+      nd.getAllLicensesAndReports()
       # TEMP
-      appName = "aai-aai-service"
-      print(f"{appName}: getting license data...")
-      nd.getLicenses(appName)
-      print(f"{appName}: creating report...")
-      nd.createReport(appName)
+      # appName = "aai-aai-service"
+      # print(f"{appName}: getting license data...")
+      # nd.getLicenses(appName)
+      # print(f"{appName}: creating report...")
+      # nd.createReport(appName)
 
       print("Exiting.")
   
