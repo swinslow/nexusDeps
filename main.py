@@ -157,7 +157,11 @@ class NexusData:
     # just extract the list from aaData key and start parsing for dependencies
     components = lic_rj.get("aaData", [])
     for component in components:
-      ds = self._depCatalog.addDependency(component, update=True)
+      ds = self._depCatalog.addDependency(
+        component,
+        appName=appName,
+        update=True
+      )
       app.addDependency(ds)
 
   def createReport(self, appName):
@@ -188,6 +192,9 @@ class NexusData:
       self.createReport(appName)
       time.sleep(0.5)
 
+  def getRedDependencies(self):
+    return self._depCatalog.getRedDependencies()
+
 ########## initial entry point ##########
 
 if __name__ == "__main__":
@@ -205,7 +212,21 @@ if __name__ == "__main__":
       nd.loadAppInitialData()
       time.sleep(0.5)
 
-      nd.getAllLicensesAndReports()
+      # TEMP
+      nd.getLicenses("ccsdk-dashboard")
+      nd.getLicenses("vid")
+      redDeps = nd.getRedDependencies()
+      print("")
+      for redDep in redDeps:
+        (dep, licenseInfo) = redDep
+        licString = " AND ".join(licenseInfo.licenses)
+        print(f"* {dep}:")
+        print(f"   -- Threat: {licenseInfo.threat}")
+        print(f"   -- License: {licString}")
+        print(f"   -- Used in: {dep.getAppNames()}")
+
+      # nd.getAllLicensesAndReports()
+
       # TEMP
       # appName = "aai-aai-service"
       # print(f"{appName}: getting license data...")

@@ -74,6 +74,7 @@ class Dependency:
     }
     self._overriddenLicenseThreat = -1
     self._effectiveLicenseThreat = -1
+    self._appNames = []
 
   def __repr__(self):
     return f"Dependency {self.depString()}"
@@ -100,6 +101,27 @@ class Dependency:
       self._artifactId = coordinates.get("name", None)
       self._version = coordinates.get("version", None)
 
+  def getBestLicenseInfo(self):
+    # pull out appropriate info based on status
+    status = self._status
+    if status in ["Overridden", "Selected"]:
+      threat = self._overriddenLicenseThreat
+      licenses = self._licenses.get("final", None)
+    else:
+      threat = self._effectiveLicenseThreat
+      licenses = self._licenses.get("effective", None)
+
+    # sort and build into LicenseInfo object, and return it
+    if licenses:
+      licenses = sorted(licenses)
+    else:
+      licenses = []
+    return LicenseInfo(licenses, threat, status)
+
+  def getAppNames(self):
+    return self._appNames
+
+
 class DependencyCatalog:
 
   def __init__(self):
@@ -114,7 +136,9 @@ class DependencyCatalog:
   def hasDependency(self, groupId, artifactId, version):
     return bool(self.getDependency(groupId, artifactId, version))
 
-  def addDependency(self, depData, update=False):
+  def addDependency(self, depData, appName=None, update=False):
+    # setting appName to any string causes us to append it to the list of
+    # apps that use this dependency
     # setting update=True causes us to update the dependency data, if already
     # present in the catalog
 
@@ -136,6 +160,8 @@ class DependencyCatalog:
     
     # update Dependency contents and [re]insert into dict
     dep.setValuesWithDict(depData)
+    if appName:
+      dep._appNames.append(appName)
     self._dependencies[ds] = dep
 
     # return dependency string to caller
@@ -155,19 +181,16 @@ class DependencyCatalog:
     dep = self._dependencies.get(ds, None)
     if not dep:
       return None
+    return dep.getBestLicenseInfo()
 
-    # pull out appropriate info based on status
-    status = dep._status
-    if status in ["Overridden", "Selected"]:
-      threat = dep._overriddenLicenseThreat
-      licenses = dep._licenses.get("final", None)
-    else:
-      threat = dep._effectiveLicenseThreat
-      licenses = dep._licenses.get("effective", None)
-
-    # sort and build into LicenseInfo object, and return it
-    if licenses:
-      licenses = sorted(licenses)
-    else:
-      licenses = []
-    return LicenseInfo(licenses, threat, status)
+  # get all high-threat (red == 8+) dependencies, regardless of which app
+  # they come from.
+  # return list of tuple in form [(Dependency, LicenseInfo), ...]
+  def getRedDependencies(self):
+    redDeps = []
+    for dep in self.getDependencyList():
+      licenseInfo = dep.getBestLicenseInfo()
+      if licenseInfo.threat >= 8:
+        t = (dep, licenseInfo)
+        redDeps.append(t)
+    return redDeps
