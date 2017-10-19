@@ -43,6 +43,7 @@ class NexusData:
     self._jsonDir = ""
     self._pdfReportsDir = ""
     self._reportsDir = ""
+    self._statusJSON = ""
 
   def configure(self, configFilename):
     try:
@@ -57,6 +58,7 @@ class NexusData:
         self._jsonDir = js.get('jsonDir', "")
         self._pdfReportsDir = js.get('pdfReportsDir', "")
         self._reportsDir = js.get('reportsDir', "")
+        self._statusJSON = js.get('statusJSON', "")
 
         isValid = True
         if self._username == "":
@@ -79,6 +81,9 @@ class NexusData:
           isValid = False
         if self._reportsDir == "":
           print(f"No reportsDir found in config file.")
+          isValid = False
+        if self._statusJSON == "":
+          print(f"No statusJSON found in config file.")
           isValid = False
 
         if not isValid:
