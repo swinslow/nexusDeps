@@ -91,8 +91,21 @@ class Dependency:
     self._licenses["effective"] = depData.get("effectiveLicenses", [])
     self._licenses["observed"] = depData.get("observedLicenses", [])
     self._licenses["declared"] = depData.get("declaredLicenses", [])
-    self._overriddenLicenseThreat = depData.get("overriddenLicenseThreat", None)
-    self._effectiveLicenseThreat = depData.get("effectiveLicenseThreat", None)
+    self._overriddenLicenseThreat = depData.get("overriddenLicenseThreat", -1)
+    self._effectiveLicenseThreat = depData.get("effectiveLicenseThreat", -1)
+
+    # FIXME temp fix; this is NOT the right way to do this
+    # FIXME trying to work around the fact that Nexus sometimes returns a
+    # FIXME threat level of "null" for unsupported components.
+    # FIXME temporarily swapping to 7 so that this can be reconsidered.
+    if self._overriddenLicenseThreat == None:
+      self._overriddenLicenseThreat = 7
+    elif self._overriddenLicenseThreat == -1:
+      self._overriddenLicenseThreat = None
+    if self._effectiveLicenseThreat == None:
+      self._effectiveLicenseThreat = 7
+    elif self._effectiveLicenseThreat == -1:
+      self._effectiveLicenseThreat = None
 
     # FIXME temp fix; this is NOT the right way to do this
     if self._artifactId == None:
@@ -190,6 +203,8 @@ class DependencyCatalog:
     redDeps = []
     for dep in self.getDependencyList():
       licenseInfo = dep.getBestLicenseInfo()
+      if licenseInfo is None or licenseInfo.threat is None:
+        print(f"Error for {dep}: {licenseInfo}")
       if licenseInfo.threat >= 8:
         t = (dep, licenseInfo)
         redDeps.append(t)

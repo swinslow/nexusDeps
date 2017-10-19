@@ -40,6 +40,8 @@ class NexusData:
     self._password = ""
     self._baseurl = ""
     self._orgId = ""
+    self._jsonDir = ""
+    self._pdfReportsDir = ""
     self._reportsDir = ""
 
   def configure(self, configFilename):
@@ -52,6 +54,8 @@ class NexusData:
         self._password = js.get('password', "")
         self._baseurl = js.get('baseurl', "")
         self._orgId = js.get('organizationId', "")
+        self._jsonDir = js.get('jsonDir', "")
+        self._pdfReportsDir = js.get('pdfReportsDir', "")
         self._reportsDir = js.get('reportsDir', "")
 
         isValid = True
@@ -66,6 +70,12 @@ class NexusData:
           isValid = False
         if self._orgId == "":
           print(f"No organizationId found in config file.")
+          isValid = False
+        if self._jsonDir == "":
+          print(f"No jsonDir found in config file.")
+          isValid = False
+        if self._pdfReportsDir == "":
+          print(f"No pdfReportsDir found in config file.")
           isValid = False
         if self._reportsDir == "":
           print(f"No reportsDir found in config file.")
@@ -150,7 +160,7 @@ class NexusData:
       self._password,
       appName,
       reportId,
-      f"{self._reportsDir}/{appName}.orig.json"
+      f"{self._jsonDir}/{appName}.orig.json"
     )
 
     # don't parse it using nexustools
@@ -190,10 +200,29 @@ class NexusData:
       self.getLicenses(appName)
       print(f"{appName}: creating report...")
       self.createReport(appName)
+      #print(f"{appName}: creating red report...")
+      #self.createRedReport()
       time.sleep(0.5)
 
   def getRedDependencies(self):
     return self._depCatalog.getRedDependencies()
+
+  def createRedReport(self):
+    print(f"Creating red dependency threat report...")
+    try:
+      filename = f"{self._reportsDir}/RedDependencies.txt"
+      with open (filename, 'w') as fout:
+        redDeps = self.getRedDependencies()
+        for redDep in redDeps:
+          (dep, licenseInfo) = redDep
+          licString = " AND ".join(licenseInfo.licenses)
+          fout.write(f"* {dep}:\n")
+          fout.write(f"   -- Threat: {licenseInfo.threat}\n")
+          fout.write(f"   -- License: {licString}\n")
+          fout.write(f"   -- Used in: {dep.getAppNames()}\n")
+
+    except Exception as e:
+      print((f"Couldn't output red dependencies report to {filename}: {str(e)}"))
 
 ########## initial entry point ##########
 
@@ -212,20 +241,14 @@ if __name__ == "__main__":
       nd.loadAppInitialData()
       time.sleep(0.5)
 
-      # TEMP
-      nd.getLicenses("ccsdk-dashboard")
-      nd.getLicenses("vid")
-      redDeps = nd.getRedDependencies()
-      print("")
-      for redDep in redDeps:
-        (dep, licenseInfo) = redDep
-        licString = " AND ".join(licenseInfo.licenses)
-        print(f"* {dep}:")
-        print(f"   -- Threat: {licenseInfo.threat}")
-        print(f"   -- License: {licString}")
-        print(f"   -- Used in: {dep.getAppNames()}")
-
-      # nd.getAllLicensesAndReports()
+      nd.getAllLicensesAndReports()
+      #appName = "ccsdk-distribution"
+      #print(f"{appName}: getting license data...")
+      #nd.getLicenses(appName)
+      #for dep in nd._depCatalog.getDependencyList():
+      #  li = dep.getBestLicenseInfo()
+      #  print(f"{li}: {dep}")
+      nd.createRedReport()
 
       # TEMP
       # appName = "aai-aai-service"
