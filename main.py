@@ -26,6 +26,7 @@ from pathlib import Path
 
 from apps import NexusApp, NexusAppCatalog
 from deps import Dependency, DependencyCatalog
+from reports import createCSVReport, createRedReport
 import nexustools
 
 class NexusData:
@@ -179,55 +180,15 @@ class NexusData:
       )
       app.addDependency(ds)
 
-  def createReport(self, appName):
-    try:
-      filename = f"{self._reportsDir}/{appName}.csv"
-      with open (filename, 'w') as fout:
-        app = self._appCatalog.getApp(appName)
-        fout.write('"Threat level",Licenses,Status,Component\n')
-        # FIXME don't reach into app vars to handle _dependencies directly!
-        for ds in sorted(app._dependencies):
-          licenseInfo = self._depCatalog.getBestLicenseInfoForDepString(ds)
-          if not licenseInfo:
-            fout.write(f'"N/A","N/A","{ds}"\n')
-          else:
-            licString = " AND ".join(licenseInfo.licenses)
-            threat = licenseInfo.threat
-            status = licenseInfo.status
-            fout.write(f'"{threat}","{licString}","{status}","{ds}"\n')
-
-    except Exception as e:
-      print((f"Couldn't output report to {filename}: {str(e)}"))
-
   def getAllLicensesAndReports(self):
     for appName in self._appCatalog.getAllAppNames():
       print(f"{appName}: getting license data...")
       self.getLicenses(appName)
       print(f"{appName}: creating report...")
-      self.createReport(appName)
+      createCSVReport(self, appName)
       #print(f"{appName}: creating red report...")
       #self.createRedReport()
       time.sleep(0.5)
-
-  def getRedDependencies(self):
-    return self._depCatalog.getRedDependencies()
-
-  def createRedReport(self):
-    print(f"Creating red dependency threat report...")
-    try:
-      filename = f"{self._reportsDir}/RedDependencies.txt"
-      with open (filename, 'w') as fout:
-        redDeps = self.getRedDependencies()
-        for redDep in redDeps:
-          (dep, licenseInfo) = redDep
-          licString = " AND ".join(licenseInfo.licenses)
-          fout.write(f"* {dep}:\n")
-          fout.write(f"   -- Threat: {licenseInfo.threat}\n")
-          fout.write(f"   -- License: {licString}\n")
-          fout.write(f"   -- Used in: {dep.getAppNames()}\n")
-
-    except Exception as e:
-      print((f"Couldn't output red dependencies report to {filename}: {str(e)}"))
 
 ########## initial entry point ##########
 
@@ -260,7 +221,7 @@ if __name__ == "__main__":
       # print(f"{appName}: getting license data...")
       # nd.getLicenses(appName)
       # print(f"{appName}: creating report...")
-      # nd.createReport(appName)
+      # nd.createCSVReport(appName)
 
       print("Exiting.")
   
