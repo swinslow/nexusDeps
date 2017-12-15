@@ -26,7 +26,7 @@ from pathlib import Path
 
 from apps import NexusApp, NexusAppCatalog
 from deps import Dependency, DependencyCatalog
-from reports import createCSVReport, createRedReport
+from reports import createCSVReport, createRedReport, createExcelReportAllLicenses
 import nexustools
 
 class NexusData:
@@ -182,13 +182,19 @@ class NexusData:
 
   def getAllLicensesAndReports(self):
     for appName in self._appCatalog.getAllAppNames():
-      print(f"{appName}: getting license data...")
-      self.getLicenses(appName)
-      print(f"{appName}: creating report...")
-      createCSVReport(self, appName)
-      #print(f"{appName}: creating red report...")
-      #self.createRedReport()
-      time.sleep(0.5)
+      # FIXME ONAP AMSTERDAM
+      # FIXME --- WE ARE EXPLICITLY IGNORING THESE REPOS
+      #if appName not in ["dmaap-dbcapi", "aai-babel", "dmaap-messagerouter-docker"]:
+      # FIXME ODL OXYGEN
+      # FIXME --- WE ARE EXPLICITLY ONLY USING THESE REPOS
+      if "oxygen" in appName:
+        print(f"{appName}: getting license data...")
+        self.getLicenses(appName)
+        print(f"{appName}: creating report...")
+        createCSVReport(self, appName)
+        #print(f"{appName}: creating red report...")
+        #self.createRedReport()
+        time.sleep(0.25)
 
 ########## initial entry point ##########
 
@@ -206,15 +212,29 @@ if __name__ == "__main__":
       nd.configure(f"{homedir}/.nexusiq/config.json")
       nd.loadAppInitialData()
       time.sleep(0.5)
+      ##### TMP
+      print(nd._appCatalog.getAllAppNames())
+      sys.exit(0)
+      ##### END TMP
 
+      # appNames = ["aaf-authz", "aaf-authz-docker", "aaf-cadi"]
+      # for appName in appNames:
+      #   print(f"{appName}: getting license data...")
+      #   nd.getLicenses(appName)
       nd.getAllLicensesAndReports()
+      xlsx_filename = f"{nd._reportsDir}/report.xlsx"
+      print(f"creating report at {xlsx_filename}...")
+      createExcelReportAllLicenses(nd, xlsx_filename)
+
+      # TEMP
+      # nd.getAllLicensesAndReports()
       #appName = "ccsdk-distribution"
       #print(f"{appName}: getting license data...")
       #nd.getLicenses(appName)
       #for dep in nd._depCatalog.getDependencyList():
       #  li = dep.getBestLicenseInfo()
       #  print(f"{li}: {dep}")
-      nd.createRedReport()
+      # nd.createRedReport()
 
       # TEMP
       # appName = "aai-aai-service"
