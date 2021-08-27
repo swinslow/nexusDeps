@@ -23,6 +23,7 @@ from operator import itemgetter
 from xlsxwriter.workbook import Workbook
 
 from categories import getCategoryForLicenseString
+from conversions import getConvertedLicenseString
 
 def createCSVReport(nd, appName):
   try:
@@ -37,6 +38,7 @@ def createCSVReport(nd, appName):
           fout.write(f'"N/A","N/A","{ds}"\n')
         else:
           licString = " AND ".join(sorted(licenseInfo.licenses))
+          licString = getConvertedLicenseString(licString)
           threat = licenseInfo.threat
           status = licenseInfo.status
           fout.write(f'"{threat}","{licString}","{status}","{ds}"\n')
@@ -76,6 +78,7 @@ def collectAllLicenses(nd):
     licenseInfo = dep.getBestLicenseInfo()
     if licenseInfo:
       licString = " AND ".join(sorted(licenseInfo.licenses))
+      licString = getConvertedLicenseString(licString)
       category = getCategoryForLicenseString(licString)
     else:
       licString = "NOT FOUND"

@@ -182,19 +182,26 @@ class NexusData:
 
   def getAllLicensesAndReports(self):
     for appName in self._appCatalog.getAllAppNames():
+      print(f"{appName}: getting license data...")
+      self.getLicenses(appName)
+      #print(f"{appName}: creating report...")
+      #createCSVReport(self, appName)
+      time.sleep(0.25)
+
       # FIXME ONAP AMSTERDAM
       # FIXME --- WE ARE EXPLICITLY IGNORING THESE REPOS
       #if appName not in ["dmaap-dbcapi", "aai-babel", "dmaap-messagerouter-docker"]:
+
       # FIXME ODL OXYGEN
       # FIXME --- WE ARE EXPLICITLY ONLY USING THESE REPOS
-      if "oxygen" in appName:
-        print(f"{appName}: getting license data...")
-        self.getLicenses(appName)
-        print(f"{appName}: creating report...")
-        createCSVReport(self, appName)
-        #print(f"{appName}: creating red report...")
-        #self.createRedReport()
-        time.sleep(0.25)
+      # if "oxygen" in appName:
+        # print(f"{appName}: getting license data...")
+        # self.getLicenses(appName)
+        # print(f"{appName}: creating report...")
+        # createCSVReport(self, appName)
+        # #print(f"{appName}: creating red report...")
+        # #self.createRedReport()
+        # time.sleep(0.25)
 
 ########## initial entry point ##########
 
@@ -213,8 +220,8 @@ if __name__ == "__main__":
       nd.loadAppInitialData()
       time.sleep(0.5)
       ##### TMP
-      print(nd._appCatalog.getAllAppNames())
-      sys.exit(0)
+      #print(nd._appCatalog.getAllAppNames())
+      #sys.exit(0)
       ##### END TMP
 
       # appNames = ["aaf-authz", "aaf-authz-docker", "aaf-cadi"]
@@ -225,6 +232,8 @@ if __name__ == "__main__":
       xlsx_filename = f"{nd._reportsDir}/report.xlsx"
       print(f"creating report at {xlsx_filename}...")
       createExcelReportAllLicenses(nd, xlsx_filename)
+      print(f"creating red report...")
+      createRedReport(nd)
 
       # TEMP
       # nd.getAllLicensesAndReports()
