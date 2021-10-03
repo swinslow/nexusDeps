@@ -1,0 +1,11 @@
+{
+    "username": "NEXUS-USERNAME",
+    "password": "NEXUS-PASSWORD",
+    "baseurl": "NEXUS-WEBSITE-URL",
+    "jenkinsBaseurl": "JENKINS-CLM-URL",
+    "organizationId": "NEXUS-ORGANIZATION-ID",
+    "jsonDir": "REPORTS-DIR/json",
+    "pdfReportsDir": "REPORTS-DIR/pdfReports",
+    "reportsDir": "REPORTS-DIR/reports",
+    "statusJSON": "REPORTS-DIR/status.json"
+}
