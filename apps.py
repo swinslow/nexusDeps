@@ -21,16 +21,20 @@
 
 class NexusApp:
 
-  def __init__(self, name, appId, reportId=None):
+  def __init__(self, name, appId, branchId, reportId=None):
     super(NexusApp, self).__init__()
 
     self._name = name
     self._appId = appId
+    self._branchId = branchId
     self._reportId = reportId
     self._dependencies = []
 
   def getAppId(self):
     return self._appId
+
+  def getBranchId(self):
+    return self._branchId
 
   def getReportId(self):
     return self._reportId
@@ -51,14 +55,14 @@ class NexusAppCatalog:
     self._apps = {}
     self._orgId = orgId
 
-  def addApp(self, name, appId):
-    app = NexusApp(name, appId)
-    self._apps[name] = app
+  def addApp(self, name, appId="", branchId="", reportId=""):
+    app = NexusApp(name, appId, branchId, reportId)
+    self._apps[branchId] = app
 
-  def getApp(self, name):
-    return self._apps.get(name, None)
+  def getApp(self, branchId):
+    return self._apps.get(branchId, None)
 
-  def getAllAppNames(self):
+  def getAllAppBranches(self):
     return sorted(list(self._apps.keys()))
 
   def __len__(self):

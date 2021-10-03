@@ -27,6 +27,7 @@ from pathlib import Path
 from apps import NexusApp, NexusAppCatalog
 from deps import Dependency, DependencyCatalog
 from reports import createCSVReport, createRedReport, createExcelReportAllLicenses
+import jenkinstools
 import nexustools
 
 class NexusData:
@@ -40,6 +41,7 @@ class NexusData:
     self._username = ""
     self._password = ""
     self._baseurl = ""
+    self._jenkinsbaseurl = ""
     self._orgId = ""
     self._jsonDir = ""
     self._pdfReportsDir = ""
@@ -55,6 +57,7 @@ class NexusData:
         self._username = js.get('username', "")
         self._password = js.get('password', "")
         self._baseurl = js.get('baseurl', "")
+        self._jenkinsbaseurl = js.get('jenkinsBaseurl', "")
         self._orgId = js.get('organizationId', "")
         self._jsonDir = js.get('jsonDir', "")
         self._pdfReportsDir = js.get('pdfReportsDir', "")
@@ -70,6 +73,9 @@ class NexusData:
           isValid = False
         if self._baseurl == "":
           print(f"No baseurl found in config file.")
+          isValid = False
+        if self._jenkinsbaseurl == "":
+          print(f"No jenkinsBaseurl found in config file.")
           isValid = False
         if self._orgId == "":
           print(f"No organizationId found in config file.")
@@ -114,6 +120,24 @@ class NexusData:
     for name, appId in apps:
       self._appCatalog.addApp(name, appId)
 
+  def loadAppInitialDataFromJenkins(self):
+    print(f"getting main URLs list from Jenkins...")
+    job_url_branch_ts = jenkinstools.getMainUrlList(self._jenkinsbaseurl)
+
+    job_report_urls = []
+    print(f"getting report IDs from Jenkins...")
+    for (job_url, job_branch_id) in job_url_branch_ts:
+      report_id, job_app_id = jenkinstools.getReportIDs(job_url)
+      if report_id:
+        # don't have the hash appID yet, just the short app id (publicID)
+        self._appCatalog.addApp(job_app_id, "", job_branch_id, report_id)
+        print(f"  => Added app {job_app_id} with branch {job_branch_id}")
+      else:
+        print(f"  => Couldn't get report ID for branch {job_branch_id}; skipping")
+
+      time.sleep(0.25)
+
+  
   def loadReportId(self, appName):
     app = self._appCatalog.getApp(appName)
     if not app:
@@ -147,16 +171,16 @@ class NexusData:
     app.setReportId(reportId)
     return reportId
 
-  def getLicenses(self, appName):
+  def getLicenses(self, appBranch):
     # first, make sure we can get the app data
-    app = self._appCatalog.getApp(appName)
+    app = self._appCatalog.getApp(appBranch)
     if not app:
-      print(f"Couldn't load app {appName} from internal app catalog.")
+      print(f"Couldn't load app branch {appBranch} from internal app catalog; skipping.")
+      return False
 
-    # make sure report ID is already loaded
-    reportId = self.loadReportId(appName)
-    if not reportId:
-      print(f"Couldn't load report ID for {appName}.")
+    # make sure report ID was obtained
+    if not app._reportId:
+      print(f"No report ID for {appBranch}; skipping.")
       return False
 
     # get the license JSON data
@@ -164,10 +188,13 @@ class NexusData:
       self._baseurl,
       self._username,
       self._password,
-      appName,
-      reportId,
-      f"{self._jsonDir}/{appName}.orig.json"
+      app._name,
+      app._reportId,
+      f"{self._jsonDir}/{appBranch}.orig.json"
     )
+    if not lic_rj:
+      print(f"Couldn't get data from report for {appBranch}; skipping.")
+      return False
 
     # don't parse it using nexustools
     # just extract the list from aaData key and start parsing for dependencies
@@ -175,15 +202,15 @@ class NexusData:
     for component in components:
       ds = self._depCatalog.addDependency(
         component,
-        appName=appName,
+        appName=appBranch,
         update=True
       )
       app.addDependency(ds)
 
   def getAllLicensesAndReports(self):
-    for appName in self._appCatalog.getAllAppNames():
-      print(f"{appName}: getting license data...")
-      self.getLicenses(appName)
+    for appBranch in self._appCatalog.getAllAppBranches():
+      print(f"{appBranch}: getting license data...")
+      self.getLicenses(appBranch)
       #print(f"{appName}: creating report...")
       #createCSVReport(self, appName)
       time.sleep(0.25)
@@ -217,7 +244,8 @@ if __name__ == "__main__":
       # FIXME let config file be user-definable
       homedir = str(Path.home())
       nd.configure(f"{homedir}/.nexusiq/config.json")
-      nd.loadAppInitialData()
+      #nd.loadAppInitialData()
+      nd.loadAppInitialDataFromJenkins()
       time.sleep(0.5)
       ##### TMP
       #print(nd._appCatalog.getAllAppNames())

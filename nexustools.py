@@ -37,11 +37,11 @@ def getNexusReportPDFURL(baseurl, appName, reportId):
 # Build URL for retrieving license JSON data, without actually calling it.
 # arguments:
 #   1) base URL for Nexus IQ server
-#   2) application name
+#   2) application public ID
 #   3) report ID for this application
 # returns: URL for retrieving license JSON data, or None if error.
-def getNexusLicenseJSONURL(baseurl, appName, reportId):
-  return f"{baseurl}/rest/report/{appName}/{reportId}/browseReport/licenses.json"
+def getNexusLicenseJSONURL(baseurl, appPublicId, reportId):
+  return f"{baseurl}/rest/report/{appPublicId}/{reportId}/browseReport/licenses.json"
 
 ########## NEXUS RETRIEVAL FUNCTIONS ##########
 
@@ -122,15 +122,14 @@ def getNexusReportPDF(baseurl, username, password, appName, reportId,
 #   1) base URL for Nexus IQ server
 #   2) user name
 #   3) user password
-#   4) appplication name
+#   4) appplication public ID
 #   5) report ID for this application
 #   6) optional: report filename path; None to skip writing to disk
 # returns: dict with JSON from NexusIQ server licenses.json call, or
 #   None if error.
-def getNexusLicenseJSON(baseurl, username, password, appName, reportId,
-  filename=None):
+def getNexusLicenseJSON(baseurl, username, password, appPublicId, reportId, filename=None):
   # get license JSON URL from helper
-  url = getNexusLicenseJSONURL(baseurl, appName, reportId)
+  url = getNexusLicenseJSONURL(baseurl, appPublicId, reportId)
   if not url:
     return None
 
@@ -138,7 +137,7 @@ def getNexusLicenseJSON(baseurl, username, password, appName, reportId,
   auth = requests.auth.HTTPBasicAuth(username, password)
   r = requests.get(url, auth=auth)
   if r.status_code != 200:
-    print(f"Error: Got invalid status code {r.status_code} from JSON license data retrieval call for {appName}")
+    print(f"Error: Got invalid status code {r.status_code} from JSON license data retrieval call for {appPublicId}")
     return None
 
   # write the JSON data to disk if asked to do so

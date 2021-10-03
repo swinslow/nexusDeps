@@ -22,9 +22,68 @@
 import os
 import time
 
+import bs4
 import requests
 
-########## JENKINS URL HELPER FUNCTIONS ##########
+def getMainUrlList(jenkinsbaseurl):
+  r = requests.get(jenkinsbaseurl)
+
+  soup = bs4.BeautifulSoup(r.content, "lxml")
+  elt = soup.find(id="projectstatus")
+  trs = elt.find_all("tr")
+  jobs = []
+  for tr in trs:
+    tr_id = tr.attrs.get("id", "")
+    if tr_id.startswith("job_"):
+      job = tr_id.split("_", maxsplit=1)[1]
+      jobs.append(job)
+
+  job_url_branch_ts = []
+  for job in jobs:
+    job_url = f"{jenkinsbaseurl}/job/{job}"
+    job_url_branch_t = (job_url, job)
+    job_url_branch_ts.append(job_url_branch_t)
+
+  return job_url_branch_ts
+
+def getReportIDs(job_url):
+  # try main report link
+  r = requests.get(job_url)
+
+  soup = bs4.BeautifulSoup(r.content, "lxml")
+  t = soup.find(class_="iq-block")
+  if t:
+    t1 = t.find("a")
+    if t1:
+      report_url = t1.attrs.get("href", "")
+      if report_url:
+        report_id = report_url.rsplit("/", maxsplit=1)[1]
+        job_id_partial_url = report_url.split("application/", maxsplit=1)[1]
+        job_app_id = job_id_partial_url.split("/", maxsplit=1)[0]
+        return (report_id, job_app_id)
+
+  # couldn't get it from main screen; try last successful build, if there is one
+  r = requests.get(f"{job_url}/lastSuccessfulBuild")
+  if r.status_code != 200:
+    return "", ""
+
+  soup = bs4.BeautifulSoup(r.content, "lxml")
+  t = soup.find(class_="iq-block")
+  if t:
+    t1 = t.find("a")
+    if t1:
+      report_url = t1.attrs.get("href", "")
+      if report_url:
+        report_id = report_url.rsplit("/", maxsplit=1)[1]
+        job_id_partial_url = report_url.split("application/", maxsplit=1)[1]
+        job_app_id = job_id_partial_url.split("/", maxsplit=1)[0]
+        return (report_id, job_app_id)
+
+  return "", ""
+
+######## OLD JENKINS FUNCTIONS BELOW HERE ########
+
+# OLD ######### JENKINS URL HELPER FUNCTIONS ##########
 
 # Build URL for retrieving list of apps in Jenkins.
 # arguments:
@@ -33,7 +92,7 @@ import requests
 def getJenkinsMainURL(baseurl):
   return f"{baseurl}/api/json"
 
-########## JENKINS RETRIEVAL FUNCTIONS ##########
+# OLD ######### JENKINS RETRIEVAL FUNCTIONS ##########
 
 # Retrieves details about all applications from Jenkins server, and returns
 # the corresponding JSON dict.
@@ -50,7 +109,7 @@ def getJenkinsAllApplications(baseurl):
   rj = r.json()
   return rj
 
-########## Jenkins PARSING FUNCTIONS ##########
+# OLD ######### Jenkins PARSING FUNCTIONS ##########
 
 # Given a Jenkins response dict from a main CLM JSON call, parse and return
 # data for those applications.
